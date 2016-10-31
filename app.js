@@ -20,7 +20,7 @@ request(url, function (error, response, body) {
     console.log('Total Cities : ' + cities.length);
 
     _async.eachSeries(cities, function (city, callback_1) {
-      var cityName = jq1(city).text().trim();
+      var cityName = jq1(city).text().trim().replace('Restaurants', '');
       var cityUrl = jq1(city).attr('href');
 
       console.log('Requesting Url : ' + cityUrl);
@@ -35,7 +35,7 @@ request(url, function (error, response, body) {
 
         _async.eachSeries(locations, function (location, callback_2) {
           var locationUrl =  jq2(location).attr('href');
-          var temp = jq2(location).text().trim();
+          var temp = jq2(location).children().remove().end().text().trim();
 
           var locationName = temp;
 
@@ -77,8 +77,11 @@ request(url, function (error, response, body) {
                   console.log('Restaurants found : ' + restaurants.length);
 
                   _async.eachSeries(restaurants, function (restaurant, callback_4) {
-                    console.log(cityName + ' ' + locationName + ' ' + jq4(restaurant).text().trim());
+                    var restaurantName = jq4(restaurant).text().trim();
+
+                    console.log(cityName + ' ' + locationName + ' ' + restaurantName);
                     writeToFile(cityName, locationName, jq4(restaurant).text().trim());
+
                     callback_4(null);
                   }, function () {
                     callback_3(null);
