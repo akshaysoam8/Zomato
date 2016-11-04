@@ -1,7 +1,7 @@
 {
   "name": "zomato",
   "version": "1.0.0",
-  "description": "",
+  "description": "web Scrapping : all the restaurants from Zomato",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,7 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "async": "^2.1.2",
+    "chalk": "^1.1.3",
     "cheerio": "^0.22.0",
+    "path": "^0.12.7",
     "request": "^2.75.0"
   }
 }

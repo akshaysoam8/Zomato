@@ -2,11 +2,15 @@ var _async = require('async');
 var cheerio = require('cheerio');
 var request = require('request');
 var fs = require('fs');
+var chalk = require('chalk');
+var path = require('path');
 
-fs.readdir(__dirname, function (err, files) {
+var restaurantHash = {};
+
+fs.readdir(path.join(__dirname, 'Data'), function (err, files) {
   files.forEach(function (file) {
-    if(file.indexOf('.csv') != -1) {
-      fs.unlink(file, function (error) {
+    if(file.indexOf('csv') != -1) {
+      fs.unlink(path.join(__dirname, 'Data', file), function (error) {
         if(error)
           console.error(error);
       });
@@ -23,8 +27,9 @@ request(url, function (error, response, body) {
     console.error(error);
 
   else {
+    console.log(chalk.blue('Loading Cheerio jq1'));
     var jq1 = cheerio.load(body);
-    var cities = jq1('.mtop a');
+    var cities = jq1(jq1('.mtop')[0]).find('a');
 
     console.log('Total Cities : ' + cities.length);
 
@@ -42,7 +47,7 @@ request(url, function (error, response, body) {
         }
 
         else  {
-          console.log('Loading Cheerio');
+          console.log(chalk.blue('Loading Cheerio jq2'));
           var jq2 = cheerio.load(body);
 
           var locations = jq2('.col-l-1by3.col-s-8.pbot0');
@@ -64,6 +69,7 @@ request(url, function (error, response, body) {
                 return;
               }
 
+              console.log(chalk.blue('Loading Cheerio jq3'));
               var jq3 = cheerio.load(body);
 
               var lastNumber = jq3('.col-l-4.mtop.pagination-number').children().children().last().text();
@@ -86,19 +92,19 @@ request(url, function (error, response, body) {
                   }
 
                   else {
+                    console.log(chalk.blue('Loading Cheerio jq4'));
                     var jq4 = cheerio.load(body);
 
                     var restaurants = jq4('.result-title.hover_feedback.zred.bold.ln24');
 
-                    console.log('Restaurants found : ' + restaurants.length);
+                    console.log(chalk.yellow('Restaurants found : ' + restaurants.length));
 
                     _async.each(restaurants, function (restaurant, callback_4) {
                       var restaurantName = jq4(restaurant).text().trim();
 
-                      writeToFile(cityName.trim(), locationName, jq4(restaurant).text().trim(), callback_4);
-                      // writeToFile(cityName.trim(), locationName.trim(), jq4(restaurant).text().trim());
+                      writeToFile(cityName.trim(), locationName.trim(), jq4(restaurant).text().trim());
 
-                      // callback_4(null);
+                      callback_4(null);
 
                     }, function (error) {
                       if(error)
@@ -121,28 +127,36 @@ request(url, function (error, response, body) {
             if(error)
               callback_1(error);
 
-            else
+            else {
+              console.log(chalk.green(cityName + ' restaurant completed'));
               callback_1(null);
+            }
           });
         }
       });
+    }, function (error) {
+      if(error)
+        console.error(error);
+
+      else {
+        console.log('Program Completed');
+
+        for(var key in restaurantHash)
+          console.log(key + ' : ' + restaurantHash[key]);
+      }
     });
   }
 });
 
-function writeToFile(city, location, restaurantName, callback_4) {
+function writeToFile(city, location, restaurantName) {
   var data = city + ', ' + location + ', ' + restaurantName + '\n';
   var fileName = city + '.csv';
 
-  fs.writeFile(fileName, data, { flag : 'a' }, function (error) {
-    if(error) {
-      console.error(error);
-      callback_4(error);
-    }
+  if(restaurantHash[city])
+    restaurantHash[city] = restaurantHash[city] + 1;
 
-    else
-      callback_4(null);
-  });
+  else
+    restaurantHash[city] = 1;
 
-  // fs.writeFileSync(fileName, data, { flag : 'a' });
+  fs.writeFileSync(path.join(__dirname, 'Data', fileName), data, { flag : 'a' });
 }
